@@ -20,14 +20,14 @@ Test::Test(float x, float y):x(x),y(y){
 }
 
 void Test::graphics(U8G2 u8g2){
-        u8g2.drawXBMP(x, y, 14, 14, cross_block_bits);
+        //u8g2.drawXBMP(x, y, 14, 14, cross_block_bits);
 }
 
 void Test::update(TIME time){
         unsigned long period = time.NOW - time.PREC;
         
-        x += vx*float(period)/50;
-        y += vy*float(period)/50;
+        //x += vx*float(period)/50;
+        //y += vy*float(period)/50;
 }
 void Test::onAction(unsigned char e, unsigned char d){
         switch(e){

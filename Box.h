@@ -3,53 +3,72 @@
 
 #ifndef BOX_H
 #define BOX_H
-#define R 8
-#define C 8
+#define R 11
+#define C 11
 #define WIDTH 10
+#define LVMAX 5
 
 struct MAP{
-  uint64 walls;
-  uint64 boxes;
-  uint64 marks;
+  uint8 walls[16];
+  uint32 boxes;
+  uint32 marks;
 	uint8 x,y;
 };
+
+const static MAP maps[] = {
+	{0xff, 0xb, 0x50, 0x90, 0xd2, 0x16, 0x90, 0xaf,
+	  0x10, 0x84, 0x20, 0xfc, 0x1, 0x0, 0x0, 0x0,
+    0x23,0x21221112,6,6},
+  {0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x14,0x15,3,1}
+};
+const uint8 boxes[] PROGMEM = {
+0xff,0xc0,0x80,0x40,0x80,0x40,0x80,0x40,0x80,0x40,
+0x80,0x40,0x80,0x40,0x80,0x40,0x80,0x40,0xff,0xc0
+};
+
+const uint8 marks[] PROGMEM = {
+0, 0, 0, 0, 12, 0, 12, 0, 127, 128, 63, 0, 30, 0, 30, 0, 18, 0, 0, 0
+};
+
 struct PERSON{
   uint8 x,y;
-};
-MAP maps[] = {
-	{0x80ff,0x2400,0x0000,3,1},
-	{0,0,0,2,2},
-	{0,0,0,3,4}
 };
 
 class Box: public Object{
         public:
-                Box(int x0, int y0);
-                void initial(int level);
-                void handle(int dx, int dy);
-                int step(int dx, int dy);
+                Box();
+                void initial(uint8 level);
+                void handle(uint8 dx, uint8 dy);
+                uint8 step(uint8 dx, uint8 dy);
+                void draw(U8GLIB u8g, uint32 A, const uint8 *bitmap);
                 //override
                 void graphics(U8GLIB u8g);
                 void update(TIME time);
-                void onAction(unsigned char e, unsigned char d);
+                void onAction(uint8 e, uint8 d);
         private:
-                int x0,y0;
-                int level;
+                uint8 x0,y0;
+                uint8 level;
                 PERSON person;
                 MAP map;
 
 };
-Box::Box(int x0, int y0):x0(x0),y0(y0){
+Box::Box(){
   level = 0;
   initial(level);
 }
 
-void Box::initial(int level){
+void Box::initial(uint8 level){
+  if(level >= LVMAX) {
+    // do sth here
+    return;
+  }
   map = maps[level];
   person.x = map.x;
   person.y = map.y;
 }
-void Box::handle(int dx, int dy){
+void Box::handle(uint8 dx, uint8 dy){
   switch (step(dx,dy)) {
     case 0://!hit
       person.x+=dx;
@@ -63,52 +82,58 @@ void Box::handle(int dx, int dy){
       else{
         person.x+=dx;
         person.y+=dy;
-        mov(map.boxes, person.x, person.y, dx, dy, C);
+        mov16(map.boxes, person.x, person.y, dx, dy);
         if(map.boxes == map.marks)
           initial(++level);
+        break;
       }
-      break;
     default: break;
   }
 }
 
-int Box::step(int dx, int dy){
-  if(get(map.walls, person.x+dx, person.y+dy, C) 
-      || person.x+dx < 0 || person.x+dx > 7 
-      || person.y+dy < 0 || person.y+dy > 7)
-    return 1;    
-  if(get(map.boxes, person.x+dx, person.y+dy, C))
+uint8 Box::step(uint8 dx, uint8 dy){
+  if(get(map.walls, person.x+dx, person.y+dy, C))
+    return 1;
+  if(get16(map.boxes, person.x+dx, person.y+dy))
     return 2;
   return 0;
 }
 
+void Box::draw(U8GLIB u8g, uint32 A, const uint8 *bitmap){
+  uint8 i,j;
+  while(A != 0){
+    i = A%16;
+    A/=16;
+    j = A%16;
+    A/=16;
+    u8g.drawBitmapP(i*WIDTH-x0, j*WIDTH-y0, 2, 10, bitmap);
+  }
+}
+
 void Box::graphics(U8GLIB u8g){
   //draw map
-  for(int y = 0; y < R; y++){
-    for(int x = 0; x < C; x++){
+  x0 = person.x*WIDTH - 30;
+  y0 = person.y*WIDTH - 30;
+  for(int y = 0; y < R; y++)
+    for(int x = 0; x < C; x++)
       if(get(map.walls,x,y,C))
-        u8g.drawBox(x0+x*WIDTH, y0+y*WIDTH, WIDTH, WIDTH);
-      if(get(map.boxes,x,y,C))
-        u8g.drawFrame(x0+x*WIDTH, y0+y*WIDTH, WIDTH, WIDTH);
-      if(get(map.marks,x,y,C))
-        u8g.drawBox(x0+x*WIDTH+2, y0+y*WIDTH+2, WIDTH-4, WIDTH-4);
-    }
-  }
+        u8g.drawBox(x*WIDTH - x0, y*WIDTH - y0, WIDTH, WIDTH);
+  //draw boxes, marks
+    draw(u8g, map.boxes, boxes);
+    draw(u8g, map.marks, marks);
   //draw person
-  u8g.drawFrame(x0+person.x*WIDTH+2, y0+person.y*WIDTH+2, WIDTH-4, WIDTH-4);
+  u8g.drawFrame(32, 32, WIDTH-4, WIDTH-4);
 }
 void Box::update(TIME time){
   unsigned long period = time.NOW - time.PREC;
 }
 
-void Box::onAction(unsigned char e, unsigned char d){
+void Box::onAction(uint8 e, uint8 d){
         switch(e){
                 case 1:
                         if(d){
                                 //Left press;
                                 handle(-1,0);
-                                if(x0 + person.x*WIDTH < 2*WIDTH)
-                                  x0+=WIDTH;
                         }else{
                                 //Left release
                         }
@@ -116,8 +141,6 @@ void Box::onAction(unsigned char e, unsigned char d){
                 case 2:
                         if(d){
                                 handle(1,0);
-                                if(x0 + person.x*WIDTH > 5*WIDTH)
-                                  x0-=WIDTH;
                                 //Right press
                         }else{
                                 //Right release
@@ -126,7 +149,6 @@ void Box::onAction(unsigned char e, unsigned char d){
                 case 4:
                         if(d){
                                 handle(0,-1);
-                                y0-=WIDTH;
                                 //Top press
                         }else{
                                 //Top release
@@ -136,7 +158,6 @@ void Box::onAction(unsigned char e, unsigned char d){
                         if(d){
                                 //Bottom press
                                 handle(0,1);
-                                y0+=WIDTH;
                         }else{
                                 //Bottom release
                         }

@@ -1,5 +1,3 @@
-#include <U8glib.h>
-#include "PageManager.h"
 //#include "Bricks.h"
 #include "Box.h"
 
@@ -8,6 +6,8 @@ PageManager *pm = PageManager::getInstance();
 struct TIME time;
 int btn[4] = {A2,A3,A4,A5};
 int num = 4;
+
+
 void setup(void) {
   u8g.setRot180();
   time.START = time.NOW = millis();
@@ -15,11 +15,9 @@ void setup(void) {
     pinMode(btn[i], INPUT);
   Page *page = new Page();
   //Bricks *t = new Bricks(0,0,64,128);
-  Box *t = new Box(0,0);
+  Box *t = new Box();
   page->add(t);
   pm->push(page);
-
-  Serial.begin(9600);
 }
 char prec_state = 0;
 

@@ -5,7 +5,7 @@
 #define BOX_H
 #define R 11
 #define C 11
-#define WIDTH 10
+#define WIDTH 12
 #define LVMAX 5
 
 struct MAP{
@@ -25,11 +25,21 @@ const static MAP maps[] = {
 };
 const uint8 boxes[] PROGMEM = {
 0xff,0xc0,0x80,0x40,0x80,0x40,0x80,0x40,0x80,0x40,
-0x80,0x40,0x80,0x40,0x80,0x40,0x80,0x40,0xff,0xc0
+0x80,0x40,0x80,0x40,0x80,0x40,0x80,0x40,0xff,0xc0,0, 0, 0, 0
 };
 
 const uint8 marks[] PROGMEM = {
-0, 0, 0, 0, 12, 0, 12, 0, 127, 128, 63, 0, 30, 0, 30, 0, 18, 0, 0, 0
+0, 0, 0, 0, 12, 0, 12, 0, 127, 128, 63, 0, 30, 0, 30, 0, 18, 0, 0, 0, 0, 0, 0, 0
+};
+
+const uint8 menr[] PROGMEM = {
+1, 0, 3, 128, 3, 16, 6, 112, 15, 128, 31, 0, 31, 240, 14, 16, 14, 0, 27, 0, 49, 128, 48, 192
+};
+const uint8 menl[] PROGMEM = {
+8, 0, 28, 0, 140, 0, 230, 0, 31, 0, 15, 128, 255, 128, 135, 0, 7, 0, 13, 128, 24, 192, 48, 192
+};
+const uint8 mens[] PROGMEM = {
+6, 0, 15, 0, 6, 0, 6, 0, 31, 128, 16, 128, 25, 128, 47, 64, 6, 0, 15, 0, 9, 0, 25, 128
 };
 
 struct PERSON{
@@ -52,10 +62,12 @@ class Box: public Object{
                 uint8 level;
                 PERSON person;
                 MAP map;
+                const uint8 *men;
 
 };
 Box::Box(){
   level = 0;
+  men = mens;
   initial(level);
 }
 
@@ -73,6 +85,7 @@ void Box::handle(uint8 dx, uint8 dy){
     case 0://!hit
       person.x+=dx;
       person.y+=dy;
+      men = mens;
       break;
     case 1://hit wall
       break;
@@ -83,6 +96,7 @@ void Box::handle(uint8 dx, uint8 dy){
         person.x+=dx;
         person.y+=dy;
         mov16(map.boxes, person.x, person.y, dx, dy);
+        men = (dx == 1)? menr : menl;
         if(map.boxes == map.marks)
           initial(++level);
         break;
@@ -106,14 +120,14 @@ void Box::draw(U8GLIB u8g, uint32 A, const uint8 *bitmap){
     A/=16;
     j = A%16;
     A/=16;
-    u8g.drawBitmapP(i*WIDTH-x0, j*WIDTH-y0, 2, 10, bitmap);
+    u8g.drawBitmapP(i*WIDTH-x0, j*WIDTH-y0, 2, 12, bitmap);
   }
 }
 
 void Box::graphics(U8GLIB u8g){
   //draw map
-  x0 = person.x*WIDTH - 30;
-  y0 = person.y*WIDTH - 30;
+  x0 = person.x*WIDTH - 64;
+  y0 = person.y*WIDTH - 32;
   for(int y = 0; y < R; y++)
     for(int x = 0; x < C; x++)
       if(get(map.walls,x,y,C))
@@ -122,7 +136,7 @@ void Box::graphics(U8GLIB u8g){
     draw(u8g, map.boxes, boxes);
     draw(u8g, map.marks, marks);
   //draw person
-  u8g.drawFrame(32, 32, WIDTH-4, WIDTH-4);
+  u8g.drawBitmapP(64, 32, 2, 12, men);
 }
 void Box::update(TIME time){
   unsigned long period = time.NOW - time.PREC;

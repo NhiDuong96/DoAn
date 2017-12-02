@@ -14,6 +14,7 @@ class Page: public Object{
         public:
                 //function
                 Page();
+                void exec(int id){}
                 void graphics(U8GLIB u8g);
                 void update(TIME time);
                 void onAction(unsigned char e, unsigned char d);
@@ -50,12 +51,13 @@ void Page::update(TIME time){
         }
 }
 void Page::onAction(unsigned char e, unsigned char d){
-        List p;
-        p = F;
-        while(p!=NULL){
-                (*p).obj->onAction(e,d);
-                p = (*p).next;
-        }
+//        List p;
+//        p = F;
+//        while(p!=NULL){
+//                (*p).obj->onAction(e,d);
+//                p = (*p).next;
+//        }
+          (*F).obj->onAction(e,d);
 }
 
 List Page::search(Object &obj){

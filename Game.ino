@@ -1,7 +1,5 @@
-//#include "Bricks.h"
-#include "Box.h"
-
-U8GLIB_ST7920_128X64_4X u8g(8, 9, 10, 11, 4, 5, 6, 7, 13, 12, 3);   // 8Bit Com: D0..D7: 8,9,10,11,4,5,6,7 en=18, di=17,rw=16
+#include "MenuPage.h"
+U8GLIB_ST7920_128X64_4X u8g(6, 7, 8, 9, 10, 11, 12, 13, 5, 3, 4);  
 PageManager *pm = PageManager::getInstance();
 struct TIME time;
 int btn[4] = {A2,A3,A4,A5};
@@ -9,15 +7,11 @@ int num = 4;
 
 
 void setup(void) {
-  u8g.setRot180();
   time.START = time.NOW = millis();
   for(int i=0 ;i <num; i++) 
     pinMode(btn[i], INPUT);
-  Page *page = new Page();
-  //Bricks *t = new Bricks(0,0,64,128);
-  Box *t = new Box();
-  page->add(t);
-  pm->push(page);
+  MenuPage *t = new MenuPage(75,0);
+  pm->push(t);
 }
 char prec_state = 0;
 

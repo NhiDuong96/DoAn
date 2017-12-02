@@ -4,7 +4,7 @@
 #define PAGEMANAGER_H
 
 struct elementP{
-        Page *page;
+        Object *obj;
         elementP *next;
 };
 typedef elementP *Stack;
@@ -13,7 +13,7 @@ class PageManager{
         public:
                 PageManager();
                 static PageManager* getInstance();
-                void push(Page *page);
+                void push(Object *obj);
                 void pop();
                 Page* peak();
         private:
@@ -34,10 +34,10 @@ PageManager::PageManager(){
         numOfPages = 0;
 }
 
-void PageManager::push(Page *page){
+void PageManager::push(Object *obj){
         Stack p;
         p = new elementP;
-        (*p).page = page;
+        (*p).obj = obj;
         (*p).next = S;
         S = p;
         numOfPages++;
@@ -52,7 +52,7 @@ void PageManager::pop(){
         }
 }
 Page* PageManager::peak(){
-        return (S!=NULL) ? (*S).page : NULL;
+        return (S!=NULL) ? (*S).obj : NULL;
 }
 #endif
 

@@ -86,16 +86,15 @@ class Sokoban: public Object{
 Sokoban::Sokoban(){
   level = 0;
   men = mens;
-  initial(level);
 }
 
 void Sokoban::exec(int id){
   switch(id){
     case 0:
-      initial(++level);
+      initial(level);
       break;
     case 1:
-      initial(level);
+      initial(++level);
       break;
     default: break;
   }
@@ -134,8 +133,8 @@ void Sokoban::handle(uint8 dx, uint8 dy){
                             msg1->showInt(level);
                             Message *msg2 = new Message(30,0,"<Replay | PlayNext>");
                             Page *p = new Page();
-                            p->add(msg1);
-                            p->add(msg2);
+                            p->add(msg1,1);
+                            p->add(msg2,5);
                             PageManager::getInstance()->push(p);
         }
         break;

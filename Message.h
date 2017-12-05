@@ -49,7 +49,7 @@ void Message::graphics(U8GLIB u8g){
   if(isshowInt){
     char str[20];
     itoa(score,str);
-    u8g.drawStr90(x-10, y + 32-u8g.getStrWidth(str)/2,str);
+    u8g.drawStr90(x-8, y + 32-u8g.getStrWidth(str)/2,str);
   }
 
 }

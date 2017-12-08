@@ -15,13 +15,15 @@ class Page: public Object{
         public:
                 //function
                 Page();
+                ~Page(){
+                  delete F,beforeT;  
+                }
                 void exec(int id);
                 void graphics(U8GLIB u8g);
                 void update(TIME time);
                 void onAction(unsigned char e, unsigned char d);
-                List search(Object &obj);
                 void add(Object *obj, unsigned char key);
-                void remove(Object &obj);
+                void clear();
                 //
         private:
                 List F;
@@ -67,15 +69,7 @@ void Page::onAction(unsigned char e, unsigned char d){
         }
 }
 
-List Page::search(Object &obj){
-        List p;
-        p = F;
-        while((p!=NULL) && (*p).obj != &obj){
-                beforeT = p;
-                p = (*p).next;
-        }
-        return p;
-}
+
 void Page::add(Object *obj, unsigned char key){
         List p;
         p = new element;
@@ -85,15 +79,14 @@ void Page::add(Object *obj, unsigned char key){
         F = p;  
         numOfObjs++;
 }
-void Page::remove(Object &obj){
-        List t;
-        t = search(obj);
-        if(t!=NULL){
-                if(F==t) F = (*t).next;
-                else (*beforeT).next = (*t).next;
-                delete t;
-                numOfObjs--;
+void Page::clear(){
+        List p;
+        p = F;
+        while(p!=NULL){
+                delete (*p).obj;
+                p = (*p).next;
         }
+        numOfObjs = 0;
 }
 #endif
 

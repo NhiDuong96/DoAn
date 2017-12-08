@@ -35,7 +35,8 @@ const uint8 quadra[] PROGMEM = {
   236, 0, 0, 0, 13, 236, 0, 0, 0, 13, 236, 0, 0, 0, 12, 12, 0, 0, 0, 15, 248,
   0, 0, 31, 255, 255, 254, 0, 48, 8, 12, 6, 0, 55, 233, 228, 2, 0, 55, 235, 236,
   250, 0, 55, 235, 236, 250, 0, 55, 239, 236, 250, 0, 55, 233, 236, 250, 0, 49, 12,
-  12, 2, 0, 63, 252, 127, 254, 0, 31, 255, 255, 252, 0, 7, 255, 255, 248, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  12, 2, 0, 63, 252, 127, 254, 0, 31, 255, 255, 252, 0, 7, 255, 255, 248,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 class MenuPage: public Object{
         public:
@@ -47,12 +48,16 @@ class MenuPage: public Object{
                 void update(TIME time);
                 void onAction(uint8 e, uint8 d);
         private:
-                int x,y;
+                int totalTime;
+                bool delay;
+                int x,y,ys;
                 int choice;
                 const uint8 *men;
 };
 MenuPage::MenuPage(int x, int y):x(x),y(y){
     choice = 0;
+    ys = 65;
+    delay = false;
 }
 void MenuPage::draw(U8GLIB u8g, int i){
   switch(i){
@@ -77,43 +82,35 @@ void MenuPage::graphics(U8GLIB u8g){
         u8g.setFont(u8g_font_6x13);
     u8g.drawStr90(x-i*15, y + 32-u8g.getStrWidth(menu[i].name)/2,menu[i].name);
   }
+
+  u8g.drawLine(55,0, 55, 64);
+  u8g.setFont(u8g_font_6x12);
+  u8g.drawStr90(40 ,ys,    "GVHD: Huynh Huu Hung");
+  u8g.drawStr90(28 ,ys, "SV  : Duong Minh Nhi - 14T1");
+  u8g.drawStr90(16 ,ys, "SV  : Tran Dinh Phu - 14T1");
+  u8g.drawStr90(4 ,ys, "SV  : Nguyen Tung Duc - 14T1");
+
 }
 
-void MenuPage::update(TIME time){}
+void MenuPage::update(TIME time){
+    uint8 period = time.NOW - time.PREC;
+    totalTime += period;
+    if(totalTime%2000 < period){
+        totalTime = 0;
+        delay = !delay;
+    }
+    else if(totalTime%50 < period && !delay){
+        ys-=1;
+    }
+    if(ys < -100) ys = 65;
+}
 
 void MenuPage::onAction(uint8 e, uint8 d){
           switch(e){
-                case 1:
-                        if(d){
-                                //Left down
-                        }else{
-                                //Left up
-                        }
-                        break;
-                case 2:
-                        if(d){
-                                //Right down
-                                Object *t;
-                                switch(choice){
-                                  case 0:
-                                    t = new Quadrapassel();
-                                    break;
-                                  case 1:
-                                    t = new Sokoban();
-                                    break;
-                                  default: break;
-                                }
-                                Page *p = new Page();
-                                p->add(t,7);
-                                PageManager::getInstance()->push(p);
-                                p->exec(0);
-                        }else{
-                                //Right up
-                        }
-                        break;
                 case 4:
                         if(d){
                                 //Top down
+                                choice= (choice == 0)? N-1: choice-1;
                         }else{
                                 //Top up
                         }
@@ -128,16 +125,23 @@ void MenuPage::onAction(uint8 e, uint8 d){
                         break;
                 case 16:
                         if(d){
+                                Object *t;
+                                switch(choice){
+                                  case 0:
+                                    t = new Quadrapassel();
+                                    break;
+                                  case 1:
+                                    t = new Sokoban();
+                                    break;
+                                  default: break;
+                                }
+                                Page *p = new Page();
+                                p->add(t,7);
+                                PageManager::getInstance()->push(p);
+                                p->exec(0);
                                 //Ok down
                         }else{
                                 //Ok up
-                        }
-                        break;
-                case 32:
-                        if(d){
-                                //Back down
-                        }else{
-                                //Back up
                         }
                         break;
                 default: break;

@@ -1,5 +1,6 @@
 #include "PageManager.h"
 #include "bit.h"
+#include "List.h"
 
 #ifndef SOKOBAN_H
 #define SOKOBAN_H
@@ -15,29 +16,35 @@ struct MAP{
 };
 
 const static MAP maps[] = {
- 
+
   {
     28, 20, 244, 135, 225, 47, 40, 56,0,0,
     0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0, 
+    0,0,0,0,0,0,0,0,0,0,
     0x35544333,0x64364113,4,4,8,8
   },
 	{
-	  0xff, 0xb, 0x50, 0x90, 0xd2, 0x16, 0x90, 0xaf,0x10, 0x84, 
+	  0xff, 0xb, 0x50, 0x90, 0xd2, 0x16, 0x90, 0xaf,0x10, 0x84,
 	  0x20, 0xfc, 0x1, 0x0, 0x0, 0x0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,
     0x64423423,0x21221112,6,6,11,11
     },
    {
-    240, 1, 128, 8, 0, 68, 0, 56, 6, 64, 
-    32, 128, 107, 241, 71, 251, 48, 0, 128, 223, 
-    45, 132, 224, 63, 252, 1,0,0,0,0, 
-    0x00,0x00,12,8,11,19    
-    }
+    240, 1, 128, 8, 0, 68, 0, 56, 6, 64,
+    32, 128, 107, 241, 71, 251, 48, 0, 128, 223,
+    45, 132, 224, 63, 252, 1,0,0,0,0,
+    0x00,0x00,12,8,11,19
+    },
+  {
+    0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,
+    0x00,0x00,1,1,1,1
+  }
 };
 
 const uint8 wall[] PROGMEM = {
-127, 224, 255, 240, 255, 240, 255, 240, 255, 240, 249, 240, 249, 240, 255, 240, 255, 240, 255, 240, 255, 240, 127, 224
+  249, 240, 255, 240, 255, 240, 255, 240, 255, 240, 121, 224, 121, 224, 255, 240, 255, 240, 255, 240, 255, 240, 249, 240
 };
 
 const uint8 box[] PROGMEM = {
@@ -45,17 +52,17 @@ const uint8 box[] PROGMEM = {
 };
 
 const uint8 mark[] PROGMEM = {
-0, 0, 0, 0, 12, 0, 12, 0, 127, 128, 63, 0, 30, 0, 30, 0, 18, 0, 0, 0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0, 6, 0, 6, 0, 25, 128, 25, 128, 6, 0, 6, 0, 0, 0, 0, 0, 0, 0
 };
 
 const uint8 menr[] PROGMEM = {
-  14, 0, 10, 0, 14, 0, 0, 0, 15, 192, 31, 0, 62, 0, 14, 0, 15, 128, 61, 128, 49, 128, 49, 192
+  0, 0, 0, 0, 228, 0, 230, 0, 63, 112, 63, 80, 31, 112, 243, 0, 225, 0, 129, 0, 0, 0, 0, 0
 };
 const uint8 menl[] PROGMEM = {
-  7, 0, 5, 0, 7, 0, 0, 0, 63, 0, 15, 128, 7, 192, 7, 0, 31, 0, 27, 192, 24, 192, 56, 192
+  0, 0, 0, 0, 129, 0, 225, 0, 243, 0, 31, 112, 63, 80, 63, 112, 230, 0, 228, 0, 0, 0, 0, 0
 };
 const uint8 mens[] PROGMEM = {
-  7, 0, 5, 0, 7, 0, 0, 0, 15, 128, 31, 192, 23, 64, 23, 64, 7, 0, 13, 128, 8, 128, 24, 192
+  0, 0, 0, 0, 142, 0, 227, 0, 63, 112, 31, 80, 63, 112, 227, 0, 142, 0, 0, 0, 0, 0, 0, 0
 };
 
 struct PERSON{
@@ -65,6 +72,9 @@ struct PERSON{
 class Sokoban: public Object{
         public:
                 Sokoban();
+                ~Sokoban(){
+                  delete men;
+                }
                 void initial(uint8 level);
                 void handle(uint8 dx, uint8 dy);
                 uint8 step(uint8 dx, uint8 dy);
@@ -94,6 +104,17 @@ void Sokoban::exec(int id){
       initial(level);
       break;
     case 1:
+      initial(++level); 
+      break;
+    case 2:
+      PageManager::getInstance()->pop();
+      break;
+    case 10:
+      break;
+    case 11:
+      initial(level);
+      break;
+    case 12:
       initial(++level);
       break;
     default: break;
@@ -126,15 +147,15 @@ void Sokoban::handle(uint8 dx, uint8 dy){
         person.x+=dx;
         person.y+=dy;
         mov16(map.boxes, person.x, person.y, dx, dy);
-        if(dy == 0)
-          men = (dx == 1)? menr : menl;
+        if(dx == 0)
+          men = (dy == 1)? menr : menl;
         if(fixed()){
-                            Message *msg1 = new Message(50,0,"Next Level:");
-                            msg1->showInt(level);
-                            Message *msg2 = new Message(30,0,"<Replay | PlayNext>");
+                            Message *msg = new Message(75,0,"Next Level:");
+                            msg->showInt(level+1);
+                            MList *l =new MList(50,0,0,"Next Level$Replay$Exit$");
                             Page *p = new Page();
-                            p->add(msg1,1);
-                            p->add(msg2,5);
+                            p->add(msg,1);
+                            p->add(l,5);
                             PageManager::getInstance()->push(p);
         }
         break;
@@ -194,14 +215,14 @@ void Sokoban::onAction(uint8 e, uint8 d){
                 case 1:
                         if(d){
                                 //Left press;
-                                handle(-1,0);
+                                handle(0,-1);
                         }else{
                                 //Left release
                         }
                         break;
                 case 2:
                         if(d){
-                                handle(1,0);
+                                handle(0,1);
                                 //Right press
                         }else{
                                 //Right release
@@ -209,7 +230,7 @@ void Sokoban::onAction(uint8 e, uint8 d){
                         break;
                 case 4:
                         if(d){
-                                handle(0,-1);
+                                handle(1,0);
                                 //Top press
                         }else{
                                 //Top release
@@ -218,14 +239,18 @@ void Sokoban::onAction(uint8 e, uint8 d){
                 case 8:
                         if(d){
                                 //Bottom press
-                                handle(0,1);
+                                handle(-1,0);
                         }else{
                                 //Bottom release
                         }
                         break;
                 case 16:
                         if(d){
-                                //Ok press
+                            //Ok press
+                            MList *l =new MList(80,0,10,"Back$Reset$Next Level$");
+                            Page *p = new Page();
+                            p->add(l,5);
+                            PageManager::getInstance()->push(p);                                
                         }else{
                                 //Ok release
                         }

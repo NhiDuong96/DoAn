@@ -1,6 +1,7 @@
 #include "PageManager.h"
 #include "bit.h"
 #include "Message.h"
+#include "List.h"
 
 #ifndef QUADRAPASSEL_H
 #define QUADRAPASSEL_H
@@ -20,9 +21,16 @@ MATRIX Shapes[5]= {
   {0x1b,0x00}
   };
 
+const uint8 cube[] PROGMEM = {
+    0xf8,0x88,0xA8,0x88,0xf8
+};
+
 class Quadrapassel: public Object{
         public:
                 Quadrapassel();
+                ~Quadrapassel(){
+                  delete m1,m2,pm;
+                 }
                 //override
                 void graphics(U8GLIB u8g);
                 void update(TIME time);
@@ -31,7 +39,8 @@ class Quadrapassel: public Object{
                 void exec(int id);
                 //define
                 void rot();
-                void randShape();
+                void init();
+                void built();
                 int insertMap(const uint8 *X, int x, int y);
                 int checkMap();
                 int hit(const uint8 *X, int x, int y);
@@ -40,37 +49,39 @@ class Quadrapassel: public Object{
                 MATRIX shape;
                 int xs,ys;
                 int x0,y0;
+                uint8 v;
                 uint16 totalTime;
                 int score;
-                Message *m1;
-                Message *m2;
+                Message *m1,*m2;
+                PageManager *pm;
 };
 Quadrapassel::Quadrapassel(){
     x0 = 4;
     y0 = 2;
     m1 = m2 = NULL;
+    pm = PageManager::getInstance();
 }
 
 void Quadrapassel::exec(int id){
         switch(id){
           case 0:
             totalTime = 0;
-            score = 0;
+            score = 0;         
             map[0]=0xffff;
-            for(int i = 1; i <= HEIGHT; i++)
-              map[i]=0xe001;
-            randShape();
+            for(int i = 1; i <= HEIGHT; i++)  map[i]=0xe001;
+            v = random(0,5);  
+            init();
             //
             if(m1 != NULL) break;
-            m1 = new Message(120,0,"Score");
+            m1 = new Message(120,10,"Score");
             m1->showInt(score);
-            m2 = new Message(105,0,"Time:");
+            m2 = new Message(105,10,"Time:");
             m2->showInt(totalTime);
-            PageManager::getInstance()->peak()->add(m1,1);
-            PageManager::getInstance()->peak()->add(m2,1);
+            pm->peak()->add(m1,1);
+            pm->peak()->add(m2,1);
             break;
           case 1:
-            PageManager::getInstance()->pop();
+            pm->pop();
             break;
           default: break;
 
@@ -79,14 +90,21 @@ void Quadrapassel::exec(int id){
 
 void Quadrapassel::graphics(U8GLIB u8g){
         u8g.drawFrame(x0,y0,HEIGHT*W,60);
+        MATRIX next = Shapes[v];
+        for(int i = 0; i < 3; i++)
+            for(int j = 0; j < 3; j++)
+                if(get(next.data,j,i,3))
+                    u8g.drawBitmapP(110+(i-1)*W, 10+(j-1)*W,1,W,cube);
+
         for(int i = 0; i < 3; i++)
             for(int j = 0; j < 3; j++)
                 if((xs+i <= HEIGHT) && get(shape.data,j,i,3))
-                    u8g.drawBox(x0+(xs+i-1)*W, y0+(ys+j-1)*W,W,W);
+                    u8g.drawBitmapP(x0+(xs+i-1)*W, y0+(ys+j-1)*W,1,W,cube);
+
         for(int j = 1; j <= HEIGHT; j++){
                 for(int i = 1; i <= WIDTH; i++)
                         if(map[j] >> i & 1)
-                                u8g.drawBox(x0+(j-1)*W,y0+(i-1)*W,W,W);
+                                u8g.drawBitmapP(x0+(j-1)*W,y0+(i-1)*W,1,W,cube);
         }
 }
 
@@ -95,24 +113,8 @@ void Quadrapassel::update(TIME time){
         totalTime += period;
         if(totalTime%1000 < period){
                 m2->showInt(totalTime/1000);
-                if(hit(shape.data,xs-1,ys) == 0)  {
-                        xs--;
-                }else{
-                        if(insertMap(shape.data,xs,ys)) {
-                                score+=checkMap();
-                                m1->showInt(score);
-                                randShape();
-                        }else{
-                            //
-                            Message *msg1 = new Message(50,0,"Your Score:");
-                            msg1->showInt(score);
-                            Message *msg2 = new Message(30,0,"<Replay | Exit>");
-                            Page *p = new Page();
-                            p->add(msg1,1);
-                            p->add(msg2,5);
-                            PageManager::getInstance()->push(p);
-                        }
-                }
+                if(hit(shape.data,xs-1,ys) == 0)  xs--;
+                else  built();              
         }
 }
 void Quadrapassel::onAction(unsigned char e, unsigned char d){
@@ -139,7 +141,10 @@ void Quadrapassel::onAction(unsigned char e, unsigned char d){
                         if(d){
                                 //Top down
                                 rot();
-                                ys = (ys + 3 > WIDTH)?(WIDTH-2):ys;
+                                if(ys+3 > WIDTH)
+                                  ys = WIDTH-2;
+                                else if(ys <= 0)
+                                  ys = 1;
                         }else{
                                 //Top up
                         }
@@ -147,22 +152,8 @@ void Quadrapassel::onAction(unsigned char e, unsigned char d){
                 case 8:
                         if(d){
                                 //Bottom down
-                                while(hit(shape.data,xs-1,ys) == 0){
-                                        xs--;
-                                }
-                                if(insertMap(shape.data,xs,ys)) {
-                                        score+=checkMap();
-                                        m1->showInt(score);
-                                        randShape();
-                                }else{
-                                  Message *msg1 = new Message(50,0,"Your Score:");
-                                  msg1->showInt(score);
-                                  Message *msg2 = new Message(30,0,"<Replay | Exit>");
-                                  Page *p = new Page();
-                                  p->add(msg1,1);
-                                  p->add(msg2,5);
-                                  PageManager::getInstance()->push(p);
-                                }
+                            while(hit(shape.data,xs-1,ys) == 0)  xs--;
+                            built();                        
                         }else{
                                 //Bottom up
                         }
@@ -170,6 +161,8 @@ void Quadrapassel::onAction(unsigned char e, unsigned char d){
                 case 16:
                         if(d){
                                 //Ok down
+                                if(hit(shape.data,xs,ys-1) == 0)
+                                        ys--;
                         }else{
                                 //Ok up
                         }
@@ -177,7 +170,7 @@ void Quadrapassel::onAction(unsigned char e, unsigned char d){
                 case 32:
                         if(d){
                                 //Back down
-                                PageManager::getInstance()->pop();
+                                pm->pop();
                         }else{
                                 //Back up
                         }
@@ -187,18 +180,37 @@ void Quadrapassel::onAction(unsigned char e, unsigned char d){
 }
 
 void Quadrapassel::rot(){
-    MATRIX c = {0,0};
+    uint8 c[2] = {0,0};
     for(int i = 0; i < 3; i++)
         for(int j = 0; j < 3; j++)
             if(get(shape.data,j,i,3))
-                set(c.data,i,2-j,3);
-    shape = c;
+                set(c,i,2-j,3);
+    
+    shape.data[0] = c[0];
+    shape.data[1] = c[1];
 }
 
-void Quadrapassel::randShape(){
-        shape = Shapes[random(0,5)];
+void Quadrapassel::init(){
+        shape = Shapes[v];
+        v = random(0,5);
         xs = HEIGHT+1;
         ys = random(1,WIDTH-2);
+}
+
+void Quadrapassel::built(){
+   if(insertMap(shape.data,xs,ys)) {
+       score+=checkMap();
+       m1->showInt(score);
+       init();
+   }else{
+       Message *msg = new Message(75,0,"Your Score:");
+       msg->showInt(score);
+       MList *l = new MList(50 ,0 ,0 ,"Try Again$Exit$"); 
+       Page *p = new Page();
+       p->add(msg,1);
+       p->add(l,5);
+       pm->push(p);
+   }
 }
 
 int Quadrapassel::insertMap(const uint8 *X, int x, int y){
@@ -208,6 +220,7 @@ int Quadrapassel::insertMap(const uint8 *X, int x, int y){
             if(get(shape.data,j,i,3))
                 map[x+i] |= 1 << (y+j);
         }
+    return 1;
 }
 
 int Quadrapassel::checkMap(){

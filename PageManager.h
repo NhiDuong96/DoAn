@@ -12,6 +12,9 @@ typedef elementP *Stack;
 class PageManager{
         public:
                 PageManager();
+                ~PageManager(){
+                  delete S;
+                }
                 static PageManager* getInstance();
                 void push(Page *page);
                 void pop();
@@ -47,6 +50,7 @@ void PageManager::pop(){
         if(S!=NULL){
                 p = S;
                 S = (*p).next;
+                (*p).page->clear();
                 delete p;
                 numOfPages--;
         }

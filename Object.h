@@ -11,6 +11,7 @@ struct TIME{
 
 class Object{
         public:
+        virtual ~Object(){};
         //game life
         virtual void exec(int id) = 0;
         virtual void graphics(U8GLIB u8g) = 0;

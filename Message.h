@@ -8,13 +8,16 @@
 class Message: public Object{
         public:
                 Message(int x, int y, const char *msg);
+                ~Message(){
+                  delete msg; 
+                 }
                 void showInt(int _score);
                 void itoa(unsigned int value, char *s);
                 //override
                 void exec(int id){}
                 void graphics(U8GLIB u8g);
-                void update(TIME time);
-                void onAction(uint8 e, uint8 d);
+                void update(TIME time){};
+                void onAction(uint8 e, uint8 d){};
         private:
                 const char *msg;
                 int score;
@@ -49,62 +52,9 @@ void Message::graphics(U8GLIB u8g){
   if(isshowInt){
     char str[20];
     itoa(score,str);
+    u8g.setFont(u8g_font_5x8);
     u8g.drawStr90(x-8, y + 32-u8g.getStrWidth(str)/2,str);
   }
 
-}
-
-void Message::update(TIME time){}
-
-void Message::onAction(uint8 e, uint8 d){
-          switch(e){
-                case 1:
-                        if(d){
-                                //Left down
-                                PageManager::getInstance()->pop();
-                                PageManager::getInstance()->peak()->exec(0);
-                        }else{
-                                //Left up
-                        }
-                        break;
-                case 2:
-                        if(d){
-                                //Right down
-                                PageManager::getInstance()->pop();
-                                PageManager::getInstance()->peak()->exec(1);
-                        }else{
-                                //Right up
-                        }
-                        break;
-                case 4:
-                        if(d){
-                                //Top down
-                        }else{
-                                //Top up
-                        }
-                        break;
-                case 8:
-                        if(d){
-                                //Bottom down
-                        }else{
-                                //Bottom up
-                        }
-                        break;
-                case 16:
-                        if(d){
-                                //Ok down
-                        }else{
-                                //Ok up
-                        }
-                        break;
-                case 32:
-                        if(d){
-                                //Back down
-                        }else{
-                                //Back up
-                        }
-                        break;
-                default: break;
-        }
 }
 #endif

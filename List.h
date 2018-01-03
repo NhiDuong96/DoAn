@@ -11,29 +11,30 @@ typedef elementL *Queue;
 
 class MList: public Object{
         public:
-                MList(int x, int y, unsigned char key, const char *msg);
+                MList(int x, int y, uint8 key, const char *msg);
                 ~MList(){
                   delete msg;
-                  delete Front,Rear;  
+                  delete Front,Rear;
                 }
                 //override
-                void exec(int id){}
+                void exec(uint8 id){}
                 void graphics(U8GLIB u8g);
                 void update(TIME time){};
-                void onAction(uint8 e, uint8 d);
+                void onAction(uint8 button, uint8 down);
         private:
                 const char *msg;
                 int x, y;
-                unsigned char size;
-                unsigned char choice;
-                unsigned char key;
+                uint8 size;
+                uint8 choice;
+                uint8 key;
                 Queue Front,Rear;
 };
-MList::MList(int x, int y, unsigned char key, const char *msg):x(x),y(y),key(key),msg(msg){
+MList::MList(int x, int y, uint8 key, const char *msg):x(x),y(y),key(key),msg(msg){
     size = 0;
     choice = 0;
     Front = NULL;
     Rear = NULL;
+    //split msg to list[choice]
     Queue p;
     p =  new elementL;
     char c;
@@ -42,10 +43,7 @@ MList::MList(int x, int y, unsigned char key, const char *msg):x(x),y(y),key(key
     do{
         c = *(msg+i);
         if(c == '$'){
-            while(j < 15) {
-              (*p).str[j] = '\0';
-              j++;
-            }
+            (*p).str[j] = '\0';
             if(Front == NULL) Front = p;
             else (*Rear).next = p;
             Rear = p;
@@ -59,14 +57,13 @@ MList::MList(int x, int y, unsigned char key, const char *msg):x(x),y(y),key(key
         }
         i++;
     }while(c != '\0');
-    delete p;
 }
 
 void MList::graphics(U8GLIB u8g){
     Queue p;
     p = Front;
     int i = 0;
-    while(p!=NULL){
+    while(i < size){
         if(choice == i){
             u8g.setFont(u8g_font_04b_03r);
             u8g.drawStr90(x-i*15+2, 2, "->");
@@ -80,31 +77,25 @@ void MList::graphics(U8GLIB u8g){
     }
 }
 
-void MList::onAction(uint8 e, uint8 d){
-          switch(e){
-                case 4:
-                        if(d){
-                                //Top down
+void MList::onAction(uint8 button, uint8 down){
+          switch(button){
+                case BUTTON_UP:
+                        if(down){
                             choice= (choice == 0)? size-1: choice-1;
                         }else{
-                                //Top up
                         }
                         break;
-                case 8:
-                        if(d){
-                                //Bottom down
+                case BUTTON_DOWN:
+                        if(down){
                             choice= (choice == size-1)? 0: choice+1;
                         }else{
-                                //Bottom up
                         }
                         break;
-                case 16:
-                        if(d){
-                                //Ok down
+                case BUTTON_OK:
+                        if(down){
                                 PageManager::getInstance()->pop();
                                 PageManager::getInstance()->peak()->exec(key+choice);
                         }else{
-                                //Ok up
                         }
                         break;
                 default: break;

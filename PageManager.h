@@ -25,7 +25,7 @@ class PageManager{
                 int numOfPages;
 };
 PageManager* PageManager::m_instance = NULL;
-
+//Singleton object
 PageManager* PageManager::getInstance(){
         if(m_instance == NULL) {
                 m_instance = new PageManager();
@@ -50,7 +50,6 @@ void PageManager::pop(){
         if(S!=NULL){
                 p = S;
                 S = (*p).next;
-                (*p).page->clear();
                 delete p;
                 numOfPages--;
         }

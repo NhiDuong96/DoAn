@@ -9,30 +9,30 @@ class Message: public Object{
         public:
                 Message(int x, int y, const char *msg);
                 ~Message(){
-                  delete msg; 
+                  delete msg;
                  }
                 void showInt(int _score);
-                void itoa(unsigned int value, char *s);
+                void itoa(int value, char *s);
                 //override
-                void exec(int id){}
+                void exec(uint8 id){}
                 void graphics(U8GLIB u8g);
-                void update(TIME time){};
-                void onAction(uint8 e, uint8 d){};
+                void update(TIME time){}
+                void onAction(uint8 button, uint8 down){}
         private:
                 const char *msg;
                 int score;
-                bool isshowInt;
                 int x, y;
+                char str[10];
 };
 Message::Message(int x, int y, const char *msg):x(x),y(y),msg(msg){
   score = 0;
-  isshowInt = false;
 }
+
 void Message::showInt(int _score){
   score = _score;
-  isshowInt = true;
 }
-void Message::itoa(unsigned int n, char *s){
+
+void Message::itoa(int n, char *s){
   char *p = s,temp;
   for(;n!=0;n/=10){
     *p= n%10 + '0';
@@ -46,15 +46,15 @@ void Message::itoa(unsigned int n, char *s){
     *s = temp;
   }
 }
+
 void Message::graphics(U8GLIB u8g){
+  // show message
   u8g.setFont(u8g_font_04b_03r);
   u8g.drawStr90(x ,y + 32-u8g.getStrWidth(msg)/2, msg);
-  if(isshowInt){
-    char str[20];
-    itoa(score,str);
-    u8g.setFont(u8g_font_5x8);
-    u8g.drawStr90(x-8, y + 32-u8g.getStrWidth(str)/2,str);
-  }
-
+  // convert score to string
+  itoa(score,str);
+  // show score
+  u8g.setFont(u8g_font_timB08);
+  u8g.drawStr90(x-10, y + 32-u8g.getStrWidth(str)/2,str);
 }
 #endif

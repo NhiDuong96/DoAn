@@ -1,54 +1,61 @@
-#include "PageManager.h"
 #include "bit.h"
-#include "List.h"
+#include "data.h"
 
 #ifndef SOKOBAN_H
 #define SOKOBAN_H
 #define WIDTH 12
 #define LVMAX 5
 
-struct MAP{
-  uint8 walls[30];
-  uint64 boxes;
-  uint64 marks;
-	uint8 x,y;
-  uint8 r,c;
-};
+#define SIZE 35
+#define WALLS 0
+#define BOXES 15
+#define MARKS 23
+#define X 31
+#define Y 32
+#define R 33
+#define C 34
 
-const static MAP maps[] = {
-
+const uint8 MAP[][SIZE] PROGMEM= {
   {
-    28, 20, 244, 135, 225, 47, 40, 56,0,0,
-    0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,
-    0x35544333,0x64364113,4,4,8,8
-  },
-	{
-	  0xff, 0xb, 0x50, 0x90, 0xd2, 0x16, 0x90, 0xaf,0x10, 0x84,
-	  0x20, 0xfc, 0x1, 0x0, 0x0, 0x0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,
-    0x64423423,0x21221112,6,6,11,11
-    },
-   {
-    240, 1, 128, 8, 0, 68, 0, 56, 6, 64,
-    32, 128, 107, 241, 71, 251, 48, 0, 128, 223,
-    45, 132, 224, 63, 252, 1,0,0,0,0,
-    0x00,0x00,12,8,11,19
+    28, 20, 244, 135, 225, 47, 40, 56,0,0,0,0,0,0,0,
+    0x35,0x54,0x43,0x33,0,0,0,0,
+    0x64,0x36,0x41,0x13,0,0,0,0,
+    4,4,8,8
+},
+ {
+    222, 20, 205, 99, 24, 254,0,0,0,0,0,0,0,0,0,
+    0x23,0x32,0x43,0x52,0x63,0,0,0,
+    0x51,0x61,0x62,0x63,0x64,0,0,0,
+    2,2,8,6
+},
+  {
+    30, 114, 66, 215, 149, 161, 129, 255,0,0,0,0,0,0,0,
+    0x23,0x52,0x65,0,0,0,0,0,
+    0x41,0x51,0x61,0,0,0,0,0,
+    2,1,8,8
     },
   {
-    0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,
-    0x00,0x00,1,1,1,1
+    240, 62, 69, 10, 180, 91, 164, 64, 159, 224,0,0,0,0,0,
+    0x32,0x52,0x53,0,0,0,0,0,
+    0x46,0x56,0x66,0,0,0,0,0,
+    4,3,9,9
+    },
+  {
+    255, 19, 226, 33, 56, 130, 98, 45, 194, 42, 40, 128, 50, 232, 255,
+    0x37,0x39,0x47,0x59,0x68,0x69,0x75,0x76,
+    0x11,0x12,0x13,0x14,0x21,0x22,0x23,0x24,
+    9,4,10,12
   }
-};
+  };
 
 const uint8 wall[] PROGMEM = {
-  249, 240, 255, 240, 255, 240, 255, 240, 255, 240, 121, 224, 121, 224, 255, 240, 255, 240, 255, 240, 255, 240, 249, 240
+  249, 240, 255, 240, 255, 240, 255, 240, 255, 240, 121,
+  224, 121, 224, 255, 240, 255, 240, 255, 240, 255, 240, 249, 240
 };
 
 const uint8 box[] PROGMEM = {
-  63, 192, 127, 224, 224, 112, 208, 176, 201, 48, 198, 48, 198, 48, 201, 48, 208, 176, 224, 112, 127, 224, 63, 192
+  63, 192, 127, 224, 224, 112, 208, 176, 201, 48, 198, 48, 198,
+  48, 201, 48, 208, 176, 224, 112, 127, 224, 63, 192
 };
 
 const uint8 mark[] PROGMEM = {
@@ -65,9 +72,6 @@ const uint8 mens[] PROGMEM = {
   0, 0, 0, 0, 142, 0, 227, 0, 63, 112, 31, 80, 63, 112, 227, 0, 142, 0, 0, 0, 0, 0, 0, 0
 };
 
-struct PERSON{
-  uint8 x,y;
-};
 
 class Sokoban: public Object{
         public:
@@ -75,88 +79,101 @@ class Sokoban: public Object{
                 ~Sokoban(){
                   delete men;
                 }
-                void initial(uint8 level);
+                void initial(int level);
                 void handle(uint8 dx, uint8 dy);
                 uint8 step(uint8 dx, uint8 dy);
-                void draw(U8GLIB u8g, uint64 A, const uint8 *bitmap);
+                void drawMap(U8GLIB u8g, uint8 *A, const uint8 *bitmap);
                 int fixed();
                 //override
-                void exec(int id);
+                void exec(uint8 id);
                 void graphics(U8GLIB u8g);
-                void update(TIME time);
-                void onAction(uint8 e, uint8 d);
+                void update(TIME time){}
+                void onAction(uint8 button, uint8 down);
         private:
                 uint8 x0,y0;
-                uint8 level;
-                PERSON person;
-                MAP map;
+                int level;
+                uint8 map[SIZE];
                 const uint8 *men;
 
 };
 Sokoban::Sokoban(){
   level = 0;
-  men = mens;
 }
 
-void Sokoban::exec(int id){
+void Sokoban::exec(uint8 id){
   switch(id){
     case 0:
       initial(level);
       break;
-    case 1:
-      initial(++level); 
+    case 1:// next level
+      initial(++level);
       break;
     case 2:
-      PageManager::getInstance()->pop();
+      initial(level);
       break;
-    case 10:
+    case 3:// back to previous page
+      pm->pop();
       break;
     case 11:
       initial(level);
       break;
-    case 12:
+    case 12:// back to previous page
+      pm->pop();
+      break;
+    case 13://next level
       initial(++level);
       break;
     default: break;
   }
 }
 
-void Sokoban::initial(uint8 level){
+void Sokoban::initial(int level){
   if(level >= LVMAX) {
-    // do sth here
+    // you passed all level
+    Message *master = new Message(75,0,"Congratulation!");
+    Page *p = new Page();
+    p->add(master,GAME_JUST_DRAW);
+    pm->push(p);
     return;
   }
+  // person state
   men = mens;
-  map = maps[level];
-  person.x = map.x;
-  person.y = map.y;
+  // load data from flash memory
+  for(int i = 0; i < SIZE; i++){
+    // =))
+    map[i] = pgm_read_byte(&(*MAP)[i]+level*SIZE);
+  }
 }
+
 void Sokoban::handle(uint8 dx, uint8 dy){
   switch (step(dx,dy)) {
     case 0://!hit
-      person.x+=dx;
-      person.y+=dy;
-      men = mens;
+        //person step
+        map[X]+=dx;
+        map[Y]+=dy;
+        men = mens;
       break;
     case 1://hit wall
       break;
-    case 2://hit Sokoban
+    case 2://hit box
       if(step(dx*2,dy*2))
         break;
       else{
-        person.x+=dx;
-        person.y+=dy;
-        mov16(map.boxes, person.x, person.y, dx, dy);
-        if(dx == 0)
-          men = (dy == 1)? menr : menl;
+        //person step
+        map[X]+=dx;
+        map[Y]+=dy;
+        //person state
+        if(dx == 0) men = (dy == 1)? menr : menl;
+        //box step, update map
+        mov16(map + BOXES, map[X], map[Y], dx, dy);
+        //you passed this map
         if(fixed()){
-                            Message *msg = new Message(75,0,"Next Level:");
-                            msg->showInt(level+1);
-                            MList *l =new MList(50,0,0,"Next Level$Replay$Exit$");
-                            Page *p = new Page();
-                            p->add(msg,1);
-                            p->add(l,5);
-                            PageManager::getInstance()->push(p);
+          //show next level message
+          msgNextLevel->showInt(level+1);
+          Page *page = new Page();
+          page->add(msgNextLevel,GAME_JUST_DRAW);
+          page->add(lNextLevel,GAME_NO_UPDATE);
+          pm->push(page);
         }
         break;
       }
@@ -165,102 +182,85 @@ void Sokoban::handle(uint8 dx, uint8 dy){
 }
 
 uint8 Sokoban::step(uint8 dx, uint8 dy){
-  if(get(map.walls, person.x+dx, person.y+dy, map.c))
+  if(get(map + WALLS, map[X]+dx, map[Y]+dy, map[C]))
     return 1;
-  if(get16(map.boxes, person.x+dx, person.y+dy))
+  if(get16(map + BOXES, map[X]+dx, map[Y]+dy))
     return 2;
   return 0;
 }
 
 int Sokoban::fixed(){
-  uint8 i,j;
-  uint64 A = map.boxes;
-  while(A != 0){
-    i = A & 0x0F; A = A >> 4;
-    j = A & 0x0F; A = A >> 4;
-    if(get16(map.marks,i,j) == 0) return 0;
+  uint8 i,j,k=0;
+  uint8 *A = map+BOXES;
+  while(*(A+k) != 0 && k < 8){
+    i = *(A+k)%16;
+    j = *(A+k)/16;
+    k++;
+    if(get16(map+MARKS,i,j) == 0) return 0;
   }
   return 1;
 }
 
-void Sokoban::draw(U8GLIB u8g, uint64 A, const uint8 *bitmap){
+void Sokoban::drawMap(U8GLIB u8g, uint8 *A, const uint8 *bitmap){
   uint8 i,j;
-  while(A != 0){
-    i = A & 0x0F; A = A >> 4;
-    j = A & 0x0F; A = A >> 4;
+  uint8 k = 0;
+  while(*(A+k) != 0 && k < 8){
+    i = *(A+k)%16;
+    j = *(A+k)/16;
+    k++;
     u8g.drawBitmapP(i*WIDTH-x0, j*WIDTH-y0, 2, WIDTH, bitmap);
   }
 }
 
 void Sokoban::graphics(U8GLIB u8g){
   //draw map
-  x0 = person.x*WIDTH - 64;
-  y0 = person.y*WIDTH - 32;
-  for(int y = 0; y < map.r; y++)
-    for(int x = 0; x < map.c; x++)
-      if(get(map.walls,x,y,map.c))
+  x0 = map[X]*WIDTH - 64;
+  y0 = map[Y]*WIDTH - 32;
+  for(int y = 0; y < map[R]; y++)
+    for(int x = 0; x < map[C]; x++)
+      if(get(map + WALLS,x,y,map[C]))
         u8g.drawBitmapP(x*WIDTH-x0, y*WIDTH-y0, 2, WIDTH, wall);
   //draw boxes, marks
-    draw(u8g, map.boxes, box);
-    draw(u8g, map.marks, mark);
+    drawMap(u8g, map + BOXES, box);
+    drawMap(u8g, map + MARKS, mark);
   //draw person
   u8g.drawBitmapP(64, 32, 2, 12, men);
 }
-void Sokoban::update(TIME time){
-  unsigned long period = time.NOW - time.PREC;
-}
 
-void Sokoban::onAction(uint8 e, uint8 d){
-        switch(e){
-                case 1:
-                        if(d){
-                                //Left press;
+void Sokoban::onAction(uint8 button, uint8 down){
+        switch(button){
+                case BUTTON_LEFT:
+                        if(down){
                                 handle(0,-1);
                         }else{
-                                //Left release
                         }
                         break;
-                case 2:
-                        if(d){
+                case BUTTON_RIGHT:
+                        if(down){
                                 handle(0,1);
-                                //Right press
                         }else{
-                                //Right release
                         }
                         break;
-                case 4:
-                        if(d){
+                case BUTTON_UP:
+                        if(down){
                                 handle(1,0);
-                                //Top press
                         }else{
-                                //Top release
                         }
                         break;
-                case 8:
-                        if(d){
-                                //Bottom press
+                case BUTTON_DOWN:
+                        if(down){
                                 handle(-1,0);
                         }else{
-                                //Bottom release
                         }
                         break;
-                case 16:
-                        if(d){
-                            //Ok press
-                            MList *l =new MList(80,0,10,"Back$Reset$Next Level$");
-                            Page *p = new Page();
-                            p->add(l,5);
-                            PageManager::getInstance()->push(p);                                
-                        }else{
-                                //Ok release
-                        }
+                case BUTTON_OK:
                         break;
-                case 32:
-                        if(d){
-                                //Back press
-                                PageManager::getInstance()->pop();
+                case BUTTON_BACK:
+                        if(down){
+                            Page *page = new Page();
+                            page->add(lOption,GAME_NO_UPDATE);
+                            pm->push(page);
                         }else{
-                                //Back release
                         }
                         break;
                 default: break;
